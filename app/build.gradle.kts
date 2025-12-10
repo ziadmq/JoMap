@@ -46,10 +46,9 @@ dependencies {
 
     implementation("com.google.maps.android:maps-compose:6.12.2")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("com.google.maps.android:maps-compose:6.12.2")
-    implementation("com.google.maps.android:maps-compose:6.1.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.google.maps.android:android-maps-utils:3.8.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
