@@ -14,7 +14,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-        manifestPlaceholders["MAPS_API_KEY"] = "YOUR_API_KEY_HERE"
+        manifestPlaceholders["MAPS_API_KEY"] = "AIzaSyDBZGnMlv0XyUQ7mEiJ5CiYZoAtJs27fFE"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -46,6 +46,10 @@ dependencies {
 
     implementation("com.google.maps.android:maps-compose:6.12.2")
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("com.google.maps.android:maps-compose:6.12.2")
+    implementation("com.google.maps.android:maps-compose:6.1.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
