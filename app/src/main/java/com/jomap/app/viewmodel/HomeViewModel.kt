@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.jomap.app.R
 import com.jomap.app.data.model.CommunityPost
 import com.jomap.app.data.model.Governorate
@@ -23,7 +24,35 @@ import kotlin.math.*
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
-    // --- Existing States ---
+    // ------------------------------------------------------------------------------------
+    // MAP STYLE STATE (DARK + MINT BRAND COLOR)
+    // ------------------------------------------------------------------------------------
+    private val _mapStyleOptions = MutableStateFlow<MapStyleOptions?>(null)
+    val mapStyleOptions = _mapStyleOptions.asStateFlow()
+
+    // Load map style at startup
+    private fun loadMapStyle() {
+        val json = """
+        [
+          { "featureType": "all", "elementType": "labels.text.fill", "stylers": [ { "color": "#A7F3EB" } ] },
+          { "featureType": "all", "elementType": "labels.text.stroke", "stylers": [ { "color": "#0A0F0D" } ] },
+          { "featureType": "landscape", "elementType": "geometry", "stylers": [ { "color": "#0D1110" } ] },
+          { "featureType": "water", "elementType": "geometry", "stylers": [ { "color": "#021F24" } ] },
+          { "featureType": "road", "elementType": "geometry", "stylers": [ { "color": "#0F1D1B" } ] },
+          { "featureType": "road", "elementType": "geometry.stroke", "stylers": [ { "color": "#00BFA6" } ] },
+          { "featureType": "poi", "elementType": "geometry", "stylers": [ { "color": "#0E1615" } ] },
+          { "featureType": "poi", "elementType": "labels.icon", "stylers": [ { "color": "#00BFA6" } ] },
+          { "featureType": "road.highway", "elementType": "geometry.fill", "stylers": [ { "color": "#01413A" } ] },
+          { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [ { "color": "#00BFA6" } ] }
+        ]
+        """.trimIndent()
+
+        _mapStyleOptions.value = MapStyleOptions(json)
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Existing State Variables
+    // ------------------------------------------------------------------------------------
     private val _selectedGovernorate = MutableStateFlow<Governorate?>(null)
     val selectedGovernorate = _selectedGovernorate.asStateFlow()
 
@@ -53,11 +82,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _tripSelection = MutableStateFlow<Set<String>>(emptySet())
     val tripSelection = _tripSelection.asStateFlow()
 
-    // 🟢 Community Posts State
     private val _communityPosts = MutableStateFlow<List<CommunityPost>>(emptyList())
     val communityPosts = _communityPosts.asStateFlow()
 
-    // 🟢 Map Focus Event (to move camera when "Show Location" is clicked)
     private val _mapFocusTarget = MutableStateFlow<LatLng?>(null)
     val mapFocusTarget = _mapFocusTarget.asStateFlow()
 
@@ -71,82 +98,90 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         loadGovernoratesData()
-        generateDummyCommunityPosts() // Load community data
+        generateDummyCommunityPosts()
+        loadMapStyle()  // ⭐ APPLY DARK MAP THEME HERE
     }
 
-    // --- Community Actions 🟢 ---
+    // ------------------------------------------------------------------------------------
+    // Map Actions
+    // ------------------------------------------------------------------------------------
+    fun focusOnLocation(latLng: LatLng) { _mapFocusTarget.value = latLng }
+    fun clearMapFocus() { _mapFocusTarget.value = null }
 
-    fun focusOnLocation(latLng: LatLng) {
-        _mapFocusTarget.value = latLng
-    }
-
-    fun clearMapFocus() {
-        _mapFocusTarget.value = null
-    }
-
+    // ------------------------------------------------------------------------------------
+    // Community
+    // ------------------------------------------------------------------------------------
     private fun generateDummyCommunityPosts() {
-        // Sample data for Amman (ID: 0), Irbid (ID: 1), Aqaba (ID: 11)
         val posts = listOf(
             CommunityPost(
-                governorateId = "0", // Amman
+                governorateId = "0",
                 placeName = "Downtown Restaurant",
-                description = "Special Offer: 50% off on Mansaf family platter this Friday!",
+                description = "50% off Mansaf!",
                 type = PostType.OFFER,
                 location = LatLng(31.951, 35.939),
                 imageRes = R.drawable.ic_launcher_background,
                 date = "2 hours ago"
             ),
             CommunityPost(
-                governorateId = "0", // Amman
+                governorateId = "0",
                 placeName = "Abdali Mall",
-                description = "Summer Festival starts tomorrow. Live music and food stalls.",
+                description = "Summer Festival Tomorrow!",
                 type = PostType.EVENT,
                 location = LatLng(31.968, 35.900),
                 imageRes = R.drawable.ic_launcher_background,
                 date = "1 day ago"
             ),
             CommunityPost(
-                governorateId = "11", // Aqaba
-                placeName = "Red Sea Diving Center",
-                description = "Free trial dive for beginners this weekend.",
+                governorateId = "11",
+                placeName = "Red Sea Diving",
+                description = "Free trial dive!",
                 type = PostType.OFFER,
                 location = LatLng(29.532, 35.000),
                 imageRes = R.drawable.ic_launcher_background,
                 date = "3 hours ago"
             ),
             CommunityPost(
-                governorateId = "5", // Jerash
+                governorateId = "5",
                 placeName = "Jerash Festival",
-                description = "The annual festival creates a bridge between cultures.",
+                description = "Annual Culture Event",
                 type = PostType.EVENT,
                 location = LatLng(32.272, 35.891),
                 imageRes = R.drawable.ic_launcher_background,
                 date = "Just now"
             )
         )
+
         _communityPosts.value = posts
     }
 
-    // --- Search & Filter ---
+
+
+    // ------------------------------------------------------------------------------------
+    // Search & Filter
+    // ------------------------------------------------------------------------------------
     fun onSearchTextChange(text: String) { _searchText.value = text; updateFilteredLocations() }
     fun onCategorySelected(category: String) { _selectedCategory.value = category; updateFilteredLocations() }
 
     private fun updateFilteredLocations() {
-        val query = _searchText.value.lowercase().trim()
+        val query = _searchText.value.lowercase()
         val cat = _selectedCategory.value
+
         _locations.value = allLocations.filter { loc ->
             val matchesSearch = loc.name.lowercase().contains(query)
-            val matchesCategory = if (cat == "All") true else loc.category.equals(cat, ignoreCase = true)
+            val matchesCategory = (cat == "All" || loc.category.equals(cat, true))
             matchesSearch && matchesCategory
         }
     }
 
-    // --- Trip Planner Actions ---
+    // ------------------------------------------------------------------------------------
+    // Trip Planner
+    // ------------------------------------------------------------------------------------
     fun toggleTripLocation(locationId: String) {
         val current = _tripSelection.value.toMutableSet()
         if (current.contains(locationId)) current.remove(locationId) else current.add(locationId)
         _tripSelection.value = current
     }
+
     fun clearTrip() { _tripSelection.value = emptySet() }
 
     fun getOptimizedTripPlan(startLat: Double, startLng: Double): List<NearbyLocation> {
@@ -155,36 +190,45 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371 // Radius of the earth in km
+        val R = 6371
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2) * sin(dLat / 2) +
-                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                sin(dLon / 2) * sin(dLon / 2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return R * c
+        val a = sin(dLat / 2).pow(2) +
+                cos(Math.toRadians(lat1)) *
+                cos(Math.toRadians(lat2)) *
+                sin(dLon / 2).pow(2)
+        return R * 2 * atan2(sqrt(a), sqrt(1 - a))
     }
 
+    // ------------------------------------------------------------------------------------
+    // Map Toggles
+    // ------------------------------------------------------------------------------------
     fun onGovernorateSelected(gov: Governorate) { _selectedGovernorate.value = gov }
     fun clearSelectedGovernorate() { _selectedGovernorate.value = null }
     fun toggleTraffic() { _isTrafficEnabled.value = !_isTrafficEnabled.value }
     fun toggleGovernorates() { _showGovernorates.value = !_showGovernorates.value }
     fun toggleMapType() { _mapTypeNormal.value = !_mapTypeNormal.value }
 
+    // ------------------------------------------------------------------------------------
+    // Load Governorates & Locations
+    // ------------------------------------------------------------------------------------
     private fun loadGovernoratesData() {
         val ammanLocs = listOf(
             NearbyLocation(UUID.randomUUID().toString(), "Roman Amphitheatre", 4.7, 31.951, 35.939, R.drawable.ic_launcher_background, "History", 5000, 0.0),
             NearbyLocation(UUID.randomUUID().toString(), "Amman Citadel", 4.8, 31.954, 35.935, R.drawable.ic_launcher_background, "History", 6000, 0.0),
             NearbyLocation(UUID.randomUUID().toString(), "Abdali Boulevard", 4.6, 31.968, 35.900, R.drawable.ic_launcher_background, "Markets", 4000, 0.0)
         )
+
         val jerashLocs = listOf(
             NearbyLocation(UUID.randomUUID().toString(), "Jerash Ruins", 4.9, 32.272, 35.891, R.drawable.ic_launcher_background, "History", 8000, 0.0),
             NearbyLocation(UUID.randomUUID().toString(), "Oval Plaza", 4.8, 32.275, 35.890, R.drawable.ic_launcher_background, "History", 7500, 0.0)
         )
+
         val aqabaLocs = listOf(
             NearbyLocation(UUID.randomUUID().toString(), "Al-Ghandour Beach", 4.5, 29.532, 35.000, R.drawable.ic_launcher_background, "Tourism", 9000, 0.0),
             NearbyLocation(UUID.randomUUID().toString(), "Aqaba Fort", 4.3, 29.520, 35.005, R.drawable.ic_launcher_background, "History", 2000, 0.0)
         )
+
         val petraLocs = listOf(
             NearbyLocation(UUID.randomUUID().toString(), "Petra", 5.0, 30.32, 35.44, R.drawable.ic_launcher_background, "History", 10000, 0.0),
             NearbyLocation(UUID.randomUUID().toString(), "Wadi Rum", 4.9, 29.57, 35.42, R.drawable.ic_launcher_background, "Tourism", 8000, 0.0)
@@ -199,8 +243,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     val inputStream = context.resources.openRawResource(resourceId)
                     val jsonString = BufferedReader(InputStreamReader(inputStream)).use { it.readText() }
                     parseGeoJsonPoints(jsonString)
-                } catch (e: Exception) { emptyList() }
-            } else { emptyList() }
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            } else emptyList()
 
             val fullGovernorates = listOf(
                 createGov(0, "Amman", R.drawable.ic_launcher_background, "Capital", "History", ammanLocs, listOf("Amman Summer"), parsedPoints),
@@ -225,41 +271,80 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun createGov(index: Int, name: String, img: Int, desc: String, hist: String, locs: List<NearbyLocation>, events: List<String>, allPoints: List<List<LatLng>>): Governorate {
+    private fun createGov(
+        index: Int,
+        name: String,
+        img: Int,
+        desc: String,
+        hist: String,
+        locs: List<NearbyLocation>,
+        events: List<String>,
+        allPoints: List<List<LatLng>>
+    ): Governorate {
         val points = if (index < allPoints.size) allPoints[index] else emptyList()
         val center = if (points.isNotEmpty()) calculateCentroid(points) else LatLng(31.0, 36.0)
-        return Governorate(index.toString(), name, img, desc, hist, locs, events, center, 10f, govColors[index % govColors.size], points)
+        return Governorate(
+            index.toString(),
+            name,
+            img,
+            desc,
+            hist,
+            locs,
+            events,
+            center,
+            10f,
+            govColors[index % govColors.size],
+            points
+        )
     }
 
     private fun parseGeoJsonPoints(json: String): List<List<LatLng>> {
-        val allPolygons = mutableListOf<List<LatLng>>()
+        val polygons = mutableListOf<List<LatLng>>()
         try {
             val root = JSONObject(json)
             val features = root.getJSONArray("features")
             for (i in 0 until features.length()) {
                 val geometry = features.getJSONObject(i).getJSONObject("geometry")
                 val type = geometry.getString("type")
-                val points = mutableListOf<LatLng>()
+                val pts = mutableListOf<LatLng>()
+
                 if (type == "Polygon") {
                     val coords = geometry.getJSONArray("coordinates").getJSONArray(0)
                     for (j in 0 until coords.length()) {
-                        points.add(LatLng(coords.getJSONArray(j).getDouble(1), coords.getJSONArray(j).getDouble(0)))
+                        pts.add(
+                            LatLng(
+                                coords.getJSONArray(j).getDouble(1),
+                                coords.getJSONArray(j).getDouble(0)
+                            )
+                        )
                     }
                 } else if (type == "MultiPolygon") {
-                    val coords = geometry.getJSONArray("coordinates").getJSONArray(0).getJSONArray(0)
+                    val coords = geometry.getJSONArray("coordinates")
+                        .getJSONArray(0)
+                        .getJSONArray(0)
                     for (j in 0 until coords.length()) {
-                        points.add(LatLng(coords.getJSONArray(j).getDouble(1), coords.getJSONArray(j).getDouble(0)))
+                        pts.add(
+                            LatLng(
+                                coords.getJSONArray(j).getDouble(1),
+                                coords.getJSONArray(j).getDouble(0)
+                            )
+                        )
                     }
                 }
-                allPolygons.add(points)
+                polygons.add(pts)
             }
-        } catch (e: Exception) { }
-        return allPolygons
+        } catch (_: Exception) {}
+
+        return polygons
     }
 
     private fun calculateCentroid(points: List<LatLng>): LatLng {
-        var lat = 0.0; var lng = 0.0
-        points.forEach { lat += it.latitude; lng += it.longitude }
+        var lat = 0.0
+        var lng = 0.0
+        points.forEach {
+            lat += it.latitude
+            lng += it.longitude
+        }
         return LatLng(lat / points.size, lng / points.size)
     }
 }

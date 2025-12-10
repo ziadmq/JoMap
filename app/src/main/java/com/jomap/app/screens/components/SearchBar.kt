@@ -1,94 +1,55 @@
 package com.jomap.app.screens.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBarSection(
-    searchText: String,
-    onSearchTextChange: (String) -> Unit,
+fun SearchBarClean(
+    value: String,
+    onValueChange: (String) -> Unit,
     onProfileClick: () -> Unit,
     onFavoritesClick: () -> Unit
 ) {
-    Surface(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .shadow(
-                elevation = 6.dp,
-                shape = RoundedCornerShape(28.dp),
-                clip = false
-            ),
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp
+            .clip(RoundedCornerShape(30.dp))
+            .background(Color(0xFFF0F2F7))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        ) {
-            // 1. Search Icon
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search",
-                tint = Color.Gray
-            )
 
-            Spacer(modifier = Modifier.width(8.dp))
+        Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
 
-            // 2. Search Field
-            TextField(
-                value = searchText,
-                onValueChange = onSearchTextChange,
-                placeholder = {
-                    Text(
-                        text = "ابحث عن مطعم، مكان...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
-                    )
-                },
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                // ✅ FIX: Use 'colors' instead of 'textFieldColors'
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                )
-            )
+        Spacer(Modifier.width(8.dp))
 
-            // 3. Favorites Button (Inside Search Bar)
-            IconButton(onClick = onFavoritesClick) {
-                Icon(
-                    imageVector = Icons.Default.FavoriteBorder,
-                    contentDescription = "Favorites",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+        Text(
+            text = value.ifEmpty { "Search place…" },
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
 
-            // 4. Profile Button
-            IconButton(onClick = onProfileClick) {
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = "Profile",
-                    tint = Color.Gray
-                )
-            }
+        Spacer(modifier = Modifier.weight(1f))
+
+        IconButton(onClick = onFavoritesClick) {
+            Icon(Icons.Default.FavoriteBorder, contentDescription = null, tint = Color.Gray)
+        }
+
+        IconButton(onClick = onProfileClick) {
+            Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray)
         }
     }
 }

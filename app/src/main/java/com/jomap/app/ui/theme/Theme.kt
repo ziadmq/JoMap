@@ -1,72 +1,62 @@
 package com.jomap.app.ui.theme
 
+import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF818CF8), // Lighter Indigo for dark mode
-    onPrimary = Color.White,
-    secondary = Color(0xFFFB7185), // Lighter Rose
-    onSecondary = Color.White,
-    tertiary = Color(0xFF2DD4BF), // Lighter Teal
-    background = Color(0xFF0F172A), // Dark Slate Background
-    surface = Color(0xFF1E293B), // Dark Slate Surface
-    onBackground = Color.White,
-    onSurface = Color.White
-)
-
-private val LightColorScheme = lightColorScheme(
+private val CrystalColorScheme = lightColorScheme(
     primary = PrimaryColor,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFE0E7FF), // Very light Indigo for backgrounds
-    onPrimaryContainer = PrimaryColor,
 
     secondary = SecondaryColor,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFFFE4E6), // Very light Rose
-    onSecondaryContainer = Color(0xFF9F1239),
 
     tertiary = TertiaryColor,
-    onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFCCFBF1),
-    onTertiaryContainer = Color(0xFF115E59),
 
-    background = BackgroundColor,
-    surface = SurfaceColor,
+    background = BackgroundLight,
     onBackground = TextPrimary,
+
+    surface = SurfaceWhite,
     onSurface = TextPrimary,
-    surfaceVariant = SurfaceVariant,
-    onSurfaceVariant = TextSecondary,
-    outline = Color(0xFFCBD5E1) // Light grey for borders
+
+    surfaceVariant = CrystalSurfaceVariant,
+    outline = CrystalOutline
 )
+
 
 @Composable
 fun JoMapTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // We disable dynamic color to force your new creative brand identity
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val colorScheme = CrystalColorScheme // Always use our Crystal Light theme for the map
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            // Make Status Bar Transparent for Full Screen Map
+            window.statusBarColor = Color.Transparent.toArgb()
+            window.navigationBarColor = Color.Transparent.toArgb()
+
+            // Use Dark Icons (since map is light)
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = true
         }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography, // Ensure Type.kt exists
+        typography = Typography,
         content = content
     )
 }
