@@ -12,34 +12,47 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary =  PrimaryColor,
-    secondary =  SecondaryColor,
-    tertiary = TertiaryColor,
-    background = Color(0xFF121212),
-    surface = Color(0xFF1E1E1E)
+    primary = Color(0xFF818CF8), // Lighter Indigo for dark mode
+    onPrimary = Color.White,
+    secondary = Color(0xFFFB7185), // Lighter Rose
+    onSecondary = Color.White,
+    tertiary = Color(0xFF2DD4BF), // Lighter Teal
+    background = Color(0xFF0F172A), // Dark Slate Background
+    surface = Color(0xFF1E293B), // Dark Slate Surface
+    onBackground = Color.White,
+    onSurface = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = PrimaryColor,
     onPrimary = Color.White,
-    primaryContainer = SurfaceVariant, // لون خلفية العناصر الأقل أهمية
+    primaryContainer = Color(0xFFE0E7FF), // Very light Indigo for backgrounds
     onPrimaryContainer = PrimaryColor,
 
     secondary = SecondaryColor,
     onSecondary = Color.White,
+    secondaryContainer = Color(0xFFFFE4E6), // Very light Rose
+    onSecondaryContainer = Color(0xFF9F1239),
 
-    background = BackgroundLight,
-    surface = SurfaceWhite,
+    tertiary = TertiaryColor,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFCCFBF1),
+    onTertiaryContainer = Color(0xFF115E59),
+
+    background = BackgroundColor,
+    surface = SurfaceColor,
+    onBackground = TextPrimary,
     onSurface = TextPrimary,
-
-    tertiary = TertiaryColor
+    surfaceVariant = SurfaceVariant,
+    onSurfaceVariant = TextSecondary,
+    outline = Color(0xFFCBD5E1) // Light grey for borders
 )
-// ... (DarkColorScheme يمكن تركه كما هو أو تعديله لاحقاً)
 
 @Composable
 fun JoMapTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // عطلنا الألوان الديناميكية لنثبت ألوان هويتنا
+    // We disable dynamic color to force your new creative brand identity
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -53,7 +66,7 @@ fun JoMapTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = Typography, // Ensure Type.kt exists
         content = content
     )
 }

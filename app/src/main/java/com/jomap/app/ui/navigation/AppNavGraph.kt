@@ -39,7 +39,9 @@ fun AppNavGraph(navController: NavHostController) {
 
         // يمكنك تفعيل الباقي عند إنشائهم
         composable(Screen.Favorites.route) {
-            FavoritesScreen(navController)
+            LocationListScreen(navController)
+
+//            FavoritesScreen(navController)
         }
         composable(Screen.Profile.route) {
             ProfileScreen(navController)
@@ -47,9 +49,7 @@ fun AppNavGraph(navController: NavHostController) {
         composable(Screen.Recommendations.route) {
 
         }
-        composable("governorate_details") {
-            // نحتاج للـ HomeViewModel المشترك أو إنشاء واحد جديد
-            // الأفضل هنا استخدام koin أو hilt للمشاركة، لكن للتبسيط سنستدعيه:
+        composable(Screen.GovernoratDetails.route) {
             val homeViewModel: com.jomap.app.viewmodel.HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
             GovernorateDetailsScreen(navController, homeViewModel)
         }

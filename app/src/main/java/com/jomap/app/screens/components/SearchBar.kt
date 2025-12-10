@@ -1,7 +1,5 @@
 package com.jomap.app.screens.components
 
-import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,9 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBarSection(
     searchText: String,
@@ -24,9 +22,6 @@ fun SearchBarSection(
     onProfileClick: () -> Unit,
     onFavoritesClick: () -> Unit
 ) {
-    // ✅ تصحيح 1: إضافة .current
-    val context = LocalContext.current
-
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -44,15 +39,16 @@ fun SearchBarSection(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
-            // 1. أيقونة البحث
+            // 1. Search Icon
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = "بحث",
+                contentDescription = "Search",
                 tint = Color.Gray
             )
 
             Spacer(modifier = Modifier.width(8.dp))
 
+            // 2. Search Field
             TextField(
                 value = searchText,
                 onValueChange = onSearchTextChange,
@@ -65,6 +61,7 @@ fun SearchBarSection(
                 },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
+                // ✅ FIX: Use 'colors' instead of 'textFieldColors'
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
@@ -75,21 +72,20 @@ fun SearchBarSection(
                 )
             )
 
+            // 3. Favorites Button (Inside Search Bar)
             IconButton(onClick = onFavoritesClick) {
                 Icon(
                     imageVector = Icons.Default.FavoriteBorder,
-                    contentDescription = "المفضلة",
+                    contentDescription = "Favorites",
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
 
-            // 4. زر الملف الشخصي
-            IconButton(onClick = {
-                onProfileClick()
-            }) {
+            // 4. Profile Button
+            IconButton(onClick = onProfileClick) {
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
-                    contentDescription = "الملف الشخصي",
+                    contentDescription = "Profile",
                     tint = Color.Gray
                 )
             }

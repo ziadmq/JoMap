@@ -4,20 +4,20 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -38,209 +38,220 @@ fun HomeMapScreen(
     navController: NavController,
     viewModel: HomeViewModel = viewModel()
 ) {
-    // تجميع الحالات (State Collection)
     val locations by viewModel.locations.collectAsState()
     val searchText by viewModel.searchText.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val governorates by viewModel.governorates.collectAsState()
     val selectedGovernorate by viewModel.selectedGovernorate.collectAsState()
-    val currentMapStyleRes by viewModel.currentMapStyle.collectAsState()
+
+    // Map Filter States
+    val isTrafficEnabled by viewModel.isTrafficEnabled.collectAsState()
+    val showGovernorates by viewModel.showGovernorates.collectAsState()
+    val isMapTypeNormal by viewModel.mapTypeNormal.collectAsState()
 
     val categories = viewModel.categories
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // إذن الموقع
+    // 1. Permission Logic
     var hasLocationPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        )
+        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
     }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) {
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         hasLocationPermission = it[Manifest.permission.ACCESS_FINE_LOCATION] == true
     }
-
     LaunchedEffect(Unit) {
-        if (!hasLocationPermission) {
-            permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
-        }
+        if (!hasLocationPermission) permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
     }
 
-    // إحداثيات مركز الأردن
+    // 2. Map Configuration (Restricted to Jordan)
     val jordanCenter = LatLng(31.2, 36.5)
+    // Jordan Bounds (approximate) to restrict camera
+    val jordanBounds = LatLngBounds(
+        LatLng(29.185, 34.959), // South West
+        LatLng(33.375, 39.300)  // North East
+    )
+
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(jordanCenter, 7.5f)
     }
 
-    Scaffold { innerPadding ->
-        Box(
+    Scaffold(
+        containerColor = Color(0xFFF1F5F9)
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(innerPadding)
+                .fillMaxSize()
         ) {
 
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                uiSettings = MapUiSettings(
-                    zoomControlsEnabled = false,
-                    myLocationButtonEnabled = false
-                ),
-                properties = MapProperties(
-                    isMyLocationEnabled = hasLocationPermission,
-                    mapStyleOptions = MapStyleOptions.loadRawResourceStyle(
-                        context,
-                        currentMapStyleRes
-                    )
-                )
-            ) {
-                // رسم المحافظات (Polygons)
-                governorates.forEach { gov ->
-                    val isSelected = (gov == selectedGovernorate)
-                    val baseColor = gov.color
-
-                    val fillColor = if (isSelected)
-                        baseColor.copy(alpha = 0.5f)
-                    else
-                        baseColor.copy(alpha = 0.25f)
-
-                    val strokeColor = if (isSelected) baseColor else baseColor.copy(alpha = 0.8f)
-                    val strokeWidth = if (isSelected) 6f else 3f
-                    val zIndex = if (isSelected) 2f else 1f
-
-                    Polygon(
-                        points = gov.points,
-                        fillColor = fillColor,
-                        strokeColor = strokeColor,
-                        strokeWidth = strokeWidth,
-                        zIndex = zIndex,
-                        clickable = true,
-                        onClick = {
-                            viewModel.onGovernorateSelected(gov)
-                            scope.launch {
-                                cameraPositionState.animate(
-                                    update = CameraUpdateFactory.newLatLngZoom(
-                                        gov.center,
-                                        gov.defaultZoom
-                                    ),
-                                    durationMs = 1200
-                                )
-                            }
-                            // الانتقال لصفحة تفاصيل المحافظة
-                            navController.navigate("governorate_details")
-                        }
-                    )
-                }
-
-                // رسم الدبابيس (Markers)
-                locations.forEach {
-                    Marker(
-                        state = rememberMarkerState(position = LatLng(it.lat, it.lng)),
-                        title = it.name,
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
-                    )
-                }
-            }
-
-            // --- واجهة البحث والتصنيفات (في الأعلى) ---
-            Column(
+            // --- SECTION 1: MAP (Top Half) ---
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.45f) // Takes roughly half the screen
+                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
             ) {
-                SearchBarSection(
-                    searchText = searchText,
-                    onSearchTextChange = { viewModel.onSearchTextChange(it) },
-                    onProfileClick = { navController.navigate("profile") },
-                    onFavoritesClick = { navController.navigate("favorites") }
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(categories) { cat ->
-                        FilterChip(
-                            selected = cat == selectedCategory,
-                            onClick = { viewModel.onCategorySelected(cat) },
-                            label = { Text(cat) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = Color.White
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    uiSettings = MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false, mapToolbarEnabled = false),
+                    properties = MapProperties(
+                        isMyLocationEnabled = hasLocationPermission,
+                        mapType = if (isMapTypeNormal) MapType.NORMAL else MapType.HYBRID,
+                        isTrafficEnabled = isTrafficEnabled,
+                        // Constrain Map to Jordan Bounds
+                        latLngBoundsForCameraTarget = jordanBounds,
+                        minZoomPreference = 7.0f, // Prevent zooming out too far
+                        maxZoomPreference = 18.0f
+                    )
+                ) {
+                    // Draw Governorates if enabled
+                    if (showGovernorates) {
+                        governorates.forEach { gov ->
+                            val isSelected = (gov == selectedGovernorate)
+                            Polygon(
+                                points = gov.points,
+                                fillColor = if (isSelected) gov.color.copy(alpha = 0.5f) else gov.color.copy(alpha = 0.2f),
+                                strokeColor = gov.color,
+                                strokeWidth = if (isSelected) 4f else 2f,
+                                clickable = true,
+                                onClick = {
+                                    viewModel.onGovernorateSelected(gov)
+                                    scope.launch { cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(gov.center, gov.defaultZoom)) }
+                                }
                             )
+                        }
+                    }
+
+                    // Markers
+                    locations.forEach {
+                        Marker(
+                            state = rememberMarkerState(position = LatLng(it.lat, it.lng)),
+                            title = it.name
+                        )
+                    }
+                }
+
+                // --- MAP FILTER CONTROLS (Top Right) ---
+                var showMapMenu by remember { mutableStateOf(false) }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                ) {
+                    // Filter Button
+                    SmallFloatingActionButton(
+                        onClick = { showMapMenu = !showMapMenu },
+                        containerColor = Color.White,
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ) {
+                        Icon(Icons.Default.Layers, contentDescription = "Layers")
+                    }
+
+                    // Dropdown for Layers
+                    DropdownMenu(
+                        expanded = showMapMenu,
+                        onDismissRequest = { showMapMenu = false },
+                        modifier = Modifier.background(Color.White)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Transports (Traffic)") },
+                            onClick = { viewModel.toggleTraffic(); showMapMenu = false },
+                            leadingIcon = {
+                                Icon(Icons.Default.Traffic, null, tint = if(isTrafficEnabled) Color.Green else Color.Gray)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Countries (Govs)") },
+                            onClick = { viewModel.toggleGovernorates(); showMapMenu = false },
+                            leadingIcon = {
+                                Icon(Icons.Default.Public, null, tint = if(showGovernorates) Color.Green else Color.Gray)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Streets / Satellite") },
+                            onClick = { viewModel.toggleMapType(); showMapMenu = false },
+                            leadingIcon = {
+                                Icon(Icons.Default.Map, null, tint = if(isMapTypeNormal) Color.Green else Color.Gray)
+                            }
                         )
                     }
                 }
             }
 
-            // --- أزرار تبديل المود (على اليسار) ---
-            Column(
+            // --- SECTION 2: SEARCH & FILTERS (Bottom Half) ---
+            LazyColumn(
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 16.dp, bottom = 80.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .fillMaxWidth()
+                    .weight(1f) // Takes remaining space
+                    .padding(top = 24.dp), // Spacing from map
+                contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
-                SmallFloatingActionButton(
-                    onClick = { viewModel.toggleMapMode("Standard") },
-                    containerColor = Color.White,
-                    contentColor = Color.Black
-                ) {
-                    Icon(Icons.Default.Refresh, "Standard")
+
+                // 1. Search Bar (with Favorites Icon)
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp) // Add spacing below search bar
+                            .shadow(16.dp, RoundedCornerShape(24.dp))
+                            .background(Color.White, RoundedCornerShape(24.dp))
+                    ) {
+                        SearchBarSection(
+                            searchText = searchText,
+                            onSearchTextChange = { viewModel.onSearchTextChange(it) },
+                            onProfileClick = { navController.navigate("profile") },
+                            onFavoritesClick = { navController.navigate("favorites") }
+                        )
+                    }
                 }
 
-                FloatingActionButton(
-                    onClick = { viewModel.toggleMapMode("Petra") },
-                    containerColor = Color(0xFFD2B48C),
-                    contentColor = Color.White
-                ) {
-                    Icon(Icons.Default.WbSunny, "Petra")
-                }
+                // 2. Filter List (Category Chips)
+                item {
+                    Text(
+                        text = "Categories",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                FloatingActionButton(
-                    onClick = { viewModel.toggleMapMode("Nightlife") },
-                    containerColor = Color(0xFF212121),
-                    contentColor = Color(0xFF00E5FF)
-                ) {
-                    Icon(Icons.Default.Nightlife, "Night")
-                }
-            }
-
-            // --- شريط الأماكن (في الأسفل) ---
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp)
-            ) {
-                LocationsCarousel(
-                    locations = locations,
-                    onItemClick = { navController.navigate("location_details/1") }
-                )
-            }
-
-            // --- زر العودة (Reset View) ---
-            // يظهر فقط عند اختيار محافظة
-            if (selectedGovernorate != null) {
-                FloatingActionButton(
-                    onClick = {
-                        // استخدام دالة المسح الصحيحة
-                        viewModel.clearSelectedGovernorate()
-                        scope.launch {
-                            cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngZoom(jordanCenter, 7.5f)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        items(categories) { cat ->
+                            val isSelected = cat == selectedCategory
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { viewModel.onCategorySelected(cat) },
+                                label = { Text(cat) },
+                                enabled = true,
+                                shape = RoundedCornerShape(12.dp),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = Color.White,
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                    labelColor = Color.Black,
+                                    selectedLabelColor = Color.White
+                                )
                             )
                         }
-                    },
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 16.dp, bottom = 200.dp),
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                ) {
-                    Icon(Icons.Default.ZoomOutMap, "عودة")
+                    }
+                }
+
+                // 3. Recommended / Results
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Recommended Places",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // List of places can go here (Vertical or Horizontal)
+                    LocationsCarousel(
+                        locations = locations,
+                        onItemClick = { navController.navigate("location_details/1") }
+                    )
+                    Spacer(modifier = Modifier.height(50.dp))
                 }
             }
         }

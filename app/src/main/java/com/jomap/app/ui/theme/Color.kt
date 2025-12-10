@@ -2,24 +2,31 @@ package com.jomap.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// الألوان الأساسية (Brand Colors)
-val PrimaryColor = Color(0xFF006AF6) // أزرق قوي للأزرار والعناصر المهمة
-val SecondaryColor = Color(0xFF00C2FF) // سماوي فاتح للتفاصيل الثانوية
-val TertiaryColor = Color(0xFFFFB300) // أصفر ذهبي للتقييمات والنجوم
+// --- Creative & Modern Palette ---
 
-// خلفيات (Backgrounds)
-val BackgroundLight = Color(0xFFF8F9FA) // رمادي فاتح جداً للخلفية (مريح للعين أكثر من الأبيض الناصع)
-val SurfaceWhite = Color(0xFFFFFFFF) // للبطاقات (Cards)
-val SurfaceVariant = Color(0xFFE1EBF5) // أزرق باهت جداً لخلفية بعض العناصر
+// Primary: Indigo - Deep, modern, and professional. Great for headers and main buttons.
+val PrimaryColor = Color(0xFF4F46E5) // Indigo 600
 
-// نصوص (Typography Colors)
-val TextPrimary = Color(0xFF1A1C1E) // أسود ناعم للعناوين
-val TextSecondary = Color(0xFF53585D) // رمادي للنصوص الفرعية
+// Secondary: Coral/Rose - Creative, energetic, and unique. Used for floating buttons and highlights.
+val SecondaryColor = Color(0xFFE11D48) // Rose 600
 
-// الألوان الافتراضية للمكتبة (Override Default Material Colors)
-val Purple80 = SecondaryColor
-val PurpleGrey80 = SurfaceVariant
-val Pink80 = TertiaryColor
+// Tertiary: Teal - Fresh and nature-inspired. Perfect for "Success" states or nature markers.
+val TertiaryColor = Color(0xFF0D9488) // Teal 600
+
+// Backgrounds: Clean, cool greys to let the map and content shine.
+val BackgroundColor = Color(0xFFF8FAFC) // Slate 50 (Cool White)
+val SurfaceColor = Color(0xFFFFFFFF) // Pure White
+val SurfaceVariant = Color(0xFFF1F5F9) // Slate 100
+
+// Typography: High contrast for readability.
+val TextPrimary = Color(0xFF0F172A) // Slate 900 (Almost Black)
+val TextSecondary = Color(0xFF64748B) // Slate 500 (Cool Grey)
+
+// Standard Material Mappings (for compatibility)
+val Purple80 = Color(0xFF818CF8)
+val PurpleGrey80 = Color(0xFF94A3B8)
+val Pink80 = Color(0xFFFB7185)
+
 val Purple40 = PrimaryColor
 val PurpleGrey40 = TextSecondary
-val Pink40 = TertiaryColor
+val Pink40 = SecondaryColor

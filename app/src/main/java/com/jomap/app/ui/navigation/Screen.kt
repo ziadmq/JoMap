@@ -11,6 +11,7 @@ sealed class Screen(val route: String) {
         fun createRoute(locationId: String) = "add_review/$locationId"
     }
     data object Favorites : Screen("favorites")
+    data object GovernoratDetails : Screen("governorate_details")
     data object Profile : Screen("profile")
     data object Recommendations : Screen("recommendations")
     // لاحقاً: OwnerDashboard, AdminPanel لو حبيت تضيفهم للموبايل
