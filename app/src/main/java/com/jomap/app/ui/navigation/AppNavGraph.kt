@@ -1,6 +1,7 @@
 package com.jomap.app.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,6 +13,7 @@ import com.jomap.app.screens.AddReviewScreen // إذا كنت ستستخدمها
 import com.jomap.app.screens.FavoritesScreen
 import com.jomap.app.screens.GovernorateDetailsScreen
 import com.jomap.app.screens.ProfileScreen
+import com.jomap.app.viewmodel.HomeViewModel
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
@@ -49,8 +51,17 @@ fun AppNavGraph(navController: NavHostController) {
         composable(Screen.Recommendations.route) {
 
         }
-        composable(Screen.GovernoratDetails.route) {
-            val homeViewModel: com.jomap.app.viewmodel.HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+        composable(Screen.GovernoratDetails.route) { backStackEntry ->
+            val govId = backStackEntry.arguments?.getString("govId")
+
+            // Create or get ViewModel
+            val homeViewModel: HomeViewModel = viewModel()
+
+            // Select the governorate so the screen has data
+            if (govId != null) {
+                homeViewModel.selectGovernorateById(govId)
+            }
+
             GovernorateDetailsScreen(navController, homeViewModel)
         }
     }

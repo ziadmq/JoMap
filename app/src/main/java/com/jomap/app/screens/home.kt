@@ -30,6 +30,7 @@ import com.google.maps.android.compose.*
 import com.jomap.app.viewmodel.HomeViewModel
 import com.jomap.app.screens.components.SearchBarSection
 import com.jomap.app.screens.components.LocationsCarousel
+import com.jomap.app.ui.navigation.Screen
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -116,9 +117,10 @@ fun HomeMapScreen(
                                 strokeColor = gov.color,
                                 strokeWidth = if (isSelected) 4f else 2f,
                                 clickable = true,
+                                // UPDATED: Navigate to details on click
                                 onClick = {
                                     viewModel.onGovernorateSelected(gov)
-                                    scope.launch { cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(gov.center, gov.defaultZoom)) }
+                                    navController.navigate(Screen.GovernoratDetails.createRoute(gov.id))
                                 }
                             )
                         }
