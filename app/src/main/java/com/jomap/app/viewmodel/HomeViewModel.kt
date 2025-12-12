@@ -21,6 +21,13 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.UUID
 import kotlin.math.*
+data class ActivityAd(
+    val id: String,
+    val title: String,
+    val description: String,
+    val imageRes: Int,
+    val price: String
+)
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -29,6 +36,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     // ------------------------------------------------------------------------------------
     private val _mapStyleOptions = MutableStateFlow<MapStyleOptions?>(null)
     val mapStyleOptions = _mapStyleOptions.asStateFlow()
+
+    private val _ads = MutableStateFlow(
+        listOf(
+            ActivityAd("1", "Wadi Rum Jeep Tour", "Discover the red desert secrets", R.drawable.ic_launcher_background, "25 JOD"),
+            ActivityAd("2", "Petra Night Show", "Experience the Siq by candlelight", R.drawable.ic_launcher_background, "17 JOD"),
+            ActivityAd("3", "Aqaba Snorkeling", "Swim with Red Sea turtles", R.drawable.ic_launcher_background, "15 JOD"),
+            ActivityAd("4", "Amman Food Tour", "Taste the best Falafel & Mansaf", R.drawable.ic_launcher_background, "20 JOD")
+        )
+    )
+    val ads = _ads.asStateFlow()
 
     private fun loadMapStyle() {
         val json = """
@@ -159,7 +176,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun onSearchTextChange(text: String) { _searchText.value = text; updateFilteredLocations() }
     fun onCategorySelected(category: String) { _selectedCategory.value = category; updateFilteredLocations() }
 
-    private fun updateFilteredLocations() {
+    private fun  updateFilteredLocations() {
         val query = _searchText.value.lowercase()
         val cat = _selectedCategory.value
 

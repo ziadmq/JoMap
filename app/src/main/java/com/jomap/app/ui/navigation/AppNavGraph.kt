@@ -16,41 +16,44 @@ fun AppNavGraph(navController: NavHostController) {
         navController = navController,
         startDestination = Screen.HomeMap.route
     ) {
+        // 1. Home Map
         composable(Screen.HomeMap.route) {
             HomeMapScreen(navController, homeViewModel)
         }
 
+        // 2. Location List
         composable(Screen.LocationList.route) {
             LocationListScreen(navController)
         }
 
+        // 3. Location Details
         composable(Screen.LocationDetails.route) { backStackEntry ->
             val locationId = backStackEntry.arguments?.getString("locationId") ?: "0"
             LocationDetailsScreen(navController, locationId)
         }
 
+        // 4. Add Review
         composable(Screen.AddReview.route) { backStackEntry ->
             val locationId = backStackEntry.arguments?.getString("locationId") ?: ""
             AddReviewScreen(navController, locationId)
         }
 
+        // 5. Favorites
         composable(Screen.Favorites.route) {
-            LocationListScreen(navController)
+            FavoritesScreen(navController)
         }
 
+        // 6. Profile
         composable(Screen.Profile.route) {
             ProfileScreen(navController)
         }
 
-        composable(Screen.GovernoratDetails.route) {
-            GovernorateDetailsScreen(navController, homeViewModel)
-        }
-
+        // 7. Trip Planner
         composable(Screen.TripPlanner.route) {
             TripPlannerScreen(navController, homeViewModel)
         }
 
-        // 🟢 New Community Screen
+        // 8. Community
         composable(Screen.Community.route) { backStackEntry ->
             val govId = backStackEntry.arguments?.getString("governorateId") ?: "0"
             CommunityScreen(navController, homeViewModel, govId)
