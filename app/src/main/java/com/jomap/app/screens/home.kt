@@ -8,7 +8,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState // ✅ Added for scrolling
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll // ✅ Added for scrolling
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -28,6 +30,7 @@ import androidx.navigation.NavController
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
+import com.jomap.app.R // ✅ Added to access map_style
 import com.jomap.app.viewmodel.HomeViewModel
 import com.jomap.app.screens.components.LocationsCarousel
 
@@ -91,9 +94,12 @@ fun HomeMapScreen(
 
         sheetContent = {
 
+            // ⭐ UPDATED COLUMN: Full height & Scrollable
             Column(
                 Modifier
                     .fillMaxWidth()
+                    .fillMaxHeight() // ✅ Ensures it fills the screen when expanded
+                    .verticalScroll(rememberScrollState()) // ✅ Allows content to scroll
                     .padding(16.dp)
             ) {
 
@@ -136,7 +142,7 @@ fun HomeMapScreen(
                     }
                 }
 
-                // COLLAPSED = STOP HERE
+                // COLLAPSED = STOP HERE (Optional: remove this if you want to see content peeking)
                 if (!isExpanded) return@Column
 
                 // ⭐ EXPANDED CONTENT
@@ -173,7 +179,9 @@ fun HomeMapScreen(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 properties = MapProperties(
-                    isMyLocationEnabled = hasPermission
+                    isMyLocationEnabled = hasPermission,
+                    // ✅ Apply the Dark Map Style here
+                    mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
                 ),
                 uiSettings = MapUiSettings(
                     zoomControlsEnabled = false,
@@ -219,11 +227,11 @@ fun SearchBarModern(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(
-                elevation = 3.dp,    // ⭐ ظل خفيف جداً
-                shape = RoundedCornerShape(12.dp), // ⭐ زوايا بسيطة (12dp)
+                elevation = 3.dp,
+                shape = RoundedCornerShape(12.dp),
                 clip = false
             )
-            .clip(RoundedCornerShape(12.dp))  // ⭐ نفس الزوايا
+            .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
@@ -233,7 +241,7 @@ fun SearchBarModern(
             modifier = Modifier.fillMaxWidth()
         ) {
 
-            // 🔍 Search icon ONLY, no box no background
+            // 🔍 Search icon
             Icon(
                 Icons.Default.Search,
                 contentDescription = null,
@@ -251,7 +259,7 @@ fun SearchBarModern(
                 modifier = Modifier.weight(1f)
             )
 
-            // ❤️ Favorite icon (simple style)
+            // ❤️ Favorite icon
             IconButton(
                 onClick = onFavoritesClick,
                 modifier = Modifier.size(28.dp)
@@ -264,7 +272,7 @@ fun SearchBarModern(
                 )
             }
 
-            // 👤 Profile icon (simple style)
+            // 👤 Profile icon
             IconButton(
                 onClick = onProfileClick,
                 modifier = Modifier.size(28.dp)
@@ -279,8 +287,6 @@ fun SearchBarModern(
         }
     }
 }
-
-
 
 @Composable
 fun BannerSection() {

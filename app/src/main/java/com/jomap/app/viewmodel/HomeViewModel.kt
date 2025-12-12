@@ -30,7 +30,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _mapStyleOptions = MutableStateFlow<MapStyleOptions?>(null)
     val mapStyleOptions = _mapStyleOptions.asStateFlow()
 
-    // Load map style at startup
     private fun loadMapStyle() {
         val json = """
         [
@@ -88,7 +87,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _mapFocusTarget = MutableStateFlow<LatLng?>(null)
     val mapFocusTarget = _mapFocusTarget.asStateFlow()
 
-    val categories = listOf("All", "History", "Tourism", "Markets", "Restaurants", "Hospitals", "Cafes", "Parks", "Hotels")
+    // ⭐ ADDED "Governorates" TO THE LIST
+    val categories = listOf("All", "Amman", "Zarqa", "Irbid", "Mafraq", "Ajloun", "Jerash", "Madaba", "Balqa", "Karak","Tafilah","Ma'an","Aqaba")
 
     private val govColors = listOf(
         Color(0xFFE57373), Color(0xFFBA68C8), Color(0xFF64B5F6), Color(0xFF4DB6AC),
@@ -99,7 +99,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     init {
         loadGovernoratesData()
         generateDummyCommunityPosts()
-        loadMapStyle()  // ⭐ APPLY DARK MAP THEME HERE
+        loadMapStyle()
     }
 
     // ------------------------------------------------------------------------------------
@@ -150,11 +150,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 date = "Just now"
             )
         )
-
         _communityPosts.value = posts
     }
-
-
 
     // ------------------------------------------------------------------------------------
     // Search & Filter
@@ -166,10 +163,31 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val query = _searchText.value.lowercase()
         val cat = _selectedCategory.value
 
-        _locations.value = allLocations.filter { loc ->
-            val matchesSearch = loc.name.lowercase().contains(query)
-            val matchesCategory = (cat == "All" || loc.category.equals(cat, true))
-            matchesSearch && matchesCategory
+        // ⭐ HANDLE "Governorates" CATEGORY
+        if (cat == "Governorates") {
+            // Convert Governorates to NearbyLocation format so they can be displayed in the list
+            _locations.value = _governorates.value.filter { gov ->
+                gov.name.lowercase().contains(query)
+            }.map { gov ->
+                NearbyLocation(
+                    id = gov.id,
+                    name = gov.name,
+                    rating = 5.0, // Default rating for governorates
+                    lat = gov.center.latitude,
+                    lng = gov.center.longitude,
+                    imageRes = gov.imageRes,
+                    category = "Governorate",
+                    visitCount = 0,
+                    distanceKm = 0.0
+                )
+            }
+        } else {
+            // Normal location filtering
+            _locations.value = allLocations.filter { loc ->
+                val matchesSearch = loc.name.lowercase().contains(query)
+                val matchesCategory = (cat == "All" || loc.category.equals(cat, true))
+                matchesSearch && matchesCategory
+            }
         }
     }
 
@@ -266,6 +284,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             withContext(Dispatchers.Main) {
                 _governorates.value = fullGovernorates
                 allLocations = ammanLocs + jerashLocs + aqabaLocs + petraLocs
+                // ⭐ Re-run filtering to update list if category was selected early
                 updateFilteredLocations()
             }
         }

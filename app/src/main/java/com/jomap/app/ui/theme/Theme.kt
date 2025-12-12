@@ -49,8 +49,8 @@ fun JoMapTheme(
             window.navigationBarColor = Color.Transparent.toArgb()
 
             // Use Dark Icons (since map is light)
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = true
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
         }
     }
 
